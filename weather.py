@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 from datetime import date
+import os
 
 # My camping location
 LATITUDE = 37.8651
@@ -86,3 +87,32 @@ print(forecast_df)
 historical_df.to_csv("historical_weather.csv", index=False)
 forecast_df.to_csv("forecast_weather.csv", index=False)
 print("\nData saved to CSV files.")
+
+# What is the current temperature at this location?
+def get_current_weather(lat, lon):
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current": "temperature_2m",
+        "timezone": "America/Los_Angeles"
+    }
+    response = requests.get(url, params=params)
+    return response.json()
+
+current_data = get_current_weather(LATITUDE, LONGITUDE)
+current_temp = current_data["current"]["temperature_2m"]
+temp_c = current_temp
+temp_f = round(temp_c * 9/5 + 32, 1)
+current_time = current_data["current"]["time"]
+
+log_df = pd.DataFrame({
+    "date": [str(today)],
+    "time": [current_time],
+    "temperature_2m": [current_temp],
+    "temp_f": [temp_f]
+})
+
+log_df.to_csv("daily_log.csv", mode="a", header=not os.path.isfile("daily_log.csv"), index=False)
+
+
